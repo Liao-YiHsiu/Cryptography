@@ -63,7 +63,6 @@ void print2(word a){
 void find(word target){
 
    init();
-   printf("target = 0b");
    print2(target);
 
    // a1 ~ a6
@@ -74,7 +73,6 @@ void find(word target){
          a[j] |= ((i >> j) & one) << i; 
 
    for(int i = 0; i < IBIT; ++i){
-      printf("a%d = 0b", i);
       print2(a[i]);
       push(a[i], i, i, 'a');
    }
@@ -106,6 +104,7 @@ void find(word target){
          push(tmp, i, i, '~');
          if(tmp == target) return;
       }
+      fprintf(stderr, "%d %ld\n", num, count);
    }
 
 }
@@ -172,37 +171,22 @@ int getID(){
 }
 
 void backtrace(int tag, long pos){
-   int tagID1, tagID2;
-   tagID1 = getID();
-   tagID2 = getID();
-   char tag1[1024], tag2[1024];
-
-   if(traO[pos] != 'a' && (traO[traA[pos]] == 'a'))
-      sprintf(tag1, "a%ld", traA[traA[pos]]);
-   else
-      sprintf(tag1, "x%d", tagID1);
-
-   if(traO[pos] != 'a' && (traO[traB[pos]] == 'a'))
-      sprintf(tag2, "a%ld", traA[traB[pos]]);
-   else
-      sprintf(tag2, "x%d", tagID2);
-      
-
+   int tag1, tag2;
    assert(pos >= 0);
    switch(traO[pos]){
       case '&':
       case '|':
       case '^':
-         if(traO[traA[pos]] != 'a')
-            backtrace(tagID1, traA[pos]);
-         if(traO[traB[pos]] != 'a')
-            backtrace(tagID2, traB[pos]);
-         printf("x%d = %s %c %s \n", tag, tag1, traO[pos], tag2);
+         tag1 = getID();
+         tag2 = getID();
+         printf("x%d = x%d %c x%d \n", tag, tag1, traO[pos], tag2);
+         backtrace(tag1, traA[pos]);
+         backtrace(tag2, traB[pos]);
          break;
       case '~':
-         if(traO[traA[pos]] != 'a')
-            backtrace(tagID1, traA[pos]);
-         printf("x%d = ~%s \n", tag, tag1);
+         tag1 = getID();
+         printf("x%d = ~x%d \n", tag, tag1);
+         backtrace(tag1, traA[pos]);
          break;
       case 'a':
          printf("x%d = a[%ld]\n", tag, traA[pos]); 
@@ -216,13 +200,12 @@ void backtrace(int tag, long pos){
 
 int main(int argc, char* argv[]){
 
-   for(int i = 3; i >= 0; --i){
+   for(int i = 0; i < 4; ++i){
       word target = 0;
       for(int k = 0; k < 16; ++k)
          target |= ((TBox[k] >> i) & 1) << k;
 
       find(target);
-      print2(arr[count-1]);
 
       backtrace(getID(), count-1);
       printf("----------------------------------\n");
