@@ -63,6 +63,7 @@ void print2(word a){
 void find(word target){
 
    init();
+   printf("target = ");
    print2(target);
 
    // a1 ~ a6
@@ -73,6 +74,7 @@ void find(word target){
          a[j] |= ((i >> j) & one) << i; 
 
    for(int i = 0; i < IBIT; ++i){
+      printf("a%d = ", i);
       print2(a[i]);
       push(a[i], i, i, 'a');
    }
@@ -104,7 +106,6 @@ void find(word target){
          push(tmp, i, i, '~');
          if(tmp == target) return;
       }
-      fprintf(stderr, "%d %ld\n", num, count);
    }
 
 }
@@ -179,17 +180,17 @@ void backtrace(int tag, long pos){
       case '^':
          tag1 = getID();
          tag2 = getID();
-         printf("x%d = x%d %c x%d \n", tag, tag1, traO[pos], tag2);
          backtrace(tag1, traA[pos]);
          backtrace(tag2, traB[pos]);
+         printf("x%d = x%d %c x%d \n", tag, tag1, traO[pos], tag2);
          break;
       case '~':
          tag1 = getID();
-         printf("x%d = ~x%d \n", tag, tag1);
          backtrace(tag1, traA[pos]);
+         printf("x%d = ~x%d \n", tag, tag1);
          break;
       case 'a':
-         printf("x%d = a[%ld]\n", tag, traA[pos]); 
+         printf("x%d = a%ld\n", tag, traA[pos]); 
          break;
       default:
          assert( false );
