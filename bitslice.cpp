@@ -68,12 +68,7 @@ void print2(word a){
 void find(word target){
 
    init();
-<<<<<<< HEAD
-
    printf("target = 0b");
-=======
-   printf("target = ");
->>>>>>> fd7f8fab5ede4535c8502d75dde45186566fe1ed
    print2(target);
 
    // a1 ~ a6
@@ -129,7 +124,6 @@ int getID(){
    return i++;
 }
 
-<<<<<<< HEAD
 void backtrace(FILE *fd, int tag, long pos){
    int tagID1, tagID2;
    tagID1 = getID();
@@ -147,16 +141,11 @@ void backtrace(FILE *fd, int tag, long pos){
       sprintf(tag2, "x%d", tagID2);
       
 
-=======
-void backtrace(int tag, long pos){
-   int tag1, tag2;
->>>>>>> fd7f8fab5ede4535c8502d75dde45186566fe1ed
    assert(pos >= 0);
    switch(traO[pos]){
       case '&':
       case '|':
       case '^':
-<<<<<<< HEAD
          if(traO[traA[pos]] != 'a')
             backtrace(fd, tagID1, traA[pos]);
          if(traO[traB[pos]] != 'a')
@@ -170,21 +159,6 @@ void backtrace(int tag, long pos){
          break;
       case 'a':
          fprintf(fd, "x%d = a[%ld]\n", tag, traA[pos]); 
-=======
-         tag1 = getID();
-         tag2 = getID();
-         backtrace(tag1, traA[pos]);
-         backtrace(tag2, traB[pos]);
-         printf("x%d = x%d %c x%d \n", tag, tag1, traO[pos], tag2);
-         break;
-      case '~':
-         tag1 = getID();
-         backtrace(tag1, traA[pos]);
-         printf("x%d = ~x%d \n", tag, tag1);
-         break;
-      case 'a':
-         printf("x%d = a%ld\n", tag, traA[pos]); 
->>>>>>> fd7f8fab5ede4535c8502d75dde45186566fe1ed
          break;
       default:
          assert( false );
@@ -201,7 +175,6 @@ void usage(char* progName){
 
 int main(int argc, char* argv[]){
 
-<<<<<<< HEAD
    const char* bitFn = NULL;
    const char* arrFn = NULL;
    const char* sbxFn = NULL;
@@ -257,14 +230,6 @@ int main(int argc, char* argv[]){
          SBOX[i] = tmp;
       }
    }
-=======
-   for(int i = 0; i < 4; ++i){
-      word target = 0;
-      for(int k = 0; k < 16; ++k)
-         target |= ((TBox[k] >> i) & 1) << k;
-
-      find(target);
->>>>>>> fd7f8fab5ede4535c8502d75dde45186566fe1ed
 
    // writeArray version
    {
