@@ -1,8 +1,8 @@
-.PHONY: clean
+.PHONY: clean 
 
 LDFLAGS+= # link to math library
 
-TARGET=test bitslice
+TARGET=bitslice
 
 all: $(TARGET)
 

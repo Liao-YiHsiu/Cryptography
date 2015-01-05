@@ -31,7 +31,7 @@ double toc(){
 }
 
 int main(int argc, char* argv[]){
-   long n = 1 << 32;
+   long n = 1L << 31;
    double time;
 
    tic();
