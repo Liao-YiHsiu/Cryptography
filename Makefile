@@ -14,7 +14,6 @@ debug: all
 
 # type make/make all to compile test_hmm
 run: all
-	./bitslice
 
 clean:
 	$(RM) $(TARGET)   # type make clean to remove the compiled file
