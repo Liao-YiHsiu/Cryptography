@@ -18,6 +18,7 @@ word mask = MAX-1;
 
 word* arr = NULL;
 char* map = NULL;
+int* tag = NULL;
 char* traO = NULL;
 long* traA = NULL;
 long* traB = NULL;
@@ -30,6 +31,8 @@ void init(){
       arr = new word[MAX];
    if(map == NULL)
       map = new char[MAX];
+   if(tag == NULL)
+      tag = new int[MAX];
 
    if(traO == NULL)
       traO = new char[MAX];
@@ -42,13 +45,17 @@ void init(){
    count = 0;
 }
 
-void push(word a, long iA, long iB, char oper){
+void push(word a, long iA, long iB, char oper, word pos[OBIT], int& num){
    assert( count < MAX );
 
    //for(int i = 0; i < count; i++)
    //   if(arr[i] == a) return;
    if(map[a] == color)
       return;
+   if(map[a] == -1)
+      pos[num++] = count;
+
+      
    map[a] = color;
 
    arr[count] = a;
@@ -65,11 +72,9 @@ void print2(word a){
    cout << endl;
 }
 
-void find(word target){
+void find(word target[OBIT], word pos[OBIT]){
 
    init();
-   printf("target = 0b");
-   print2(target);
 
    // a1 ~ a6
    word a[IBIT] = {0};
@@ -78,91 +83,89 @@ void find(word target){
          a[j] |= ((i >> j) & one) << i; 
 
    for(int i = 0; i < IBIT; ++i){
-      printf("a%d = ", i);
-      print2(a[i]);
-      push(a[i], i, i, 'a');
+      int tmp;
+      push(a[i], i, i, 'a', NULL, tmp);
    }
 
    word tmp;
    long tmp_count;
    int num = 0;
+   
+   for(int i = 0; i < MAX; ++i)
+      map[i] = 0;
+   // mark target.
+   for(int i = 0; i < OBIT; i++)
+      map[target[i]] = -1;
+   
    while(true){
-      num++;
       tmp_count = count;
 
       for(long i = 0; i < tmp_count; ++i)
          for(long j = i+1; j < tmp_count; ++j){
             tmp = arr[i] & arr[j];
-            push(tmp, i, j, '&');
-            if(tmp == target) return;
+            push(tmp, i, j, '&', pos, num);
 
             tmp = arr[i] | arr[j];
-            push(tmp, i, j, '|');
-            if(tmp == target) return;
+            push(tmp, i, j, '|', pos, num);
 
             tmp = arr[i] ^ arr[j];
-            push(tmp, i, j, '^');
-            if(tmp == target) return;
+            push(tmp, i, j, '^', pos, num);
+
+            if(num == OBIT)return;
          }
 
       for(long i = 0; i < tmp_count; ++i){
          tmp = (~arr[i]) & mask;
-         push(tmp, i, i, '~');
-         if(tmp == target) return;
+         push(tmp, i, i, '~', pos, num);
+
+         if(num == OBIT) return;
       }
    }
 }
 
-void finds(word target[OBIT]){
-   for(int i = 0; i < OBIT; ++i){
-      find(target[i]);
-   }
-}
-
 int getID(){
-   static int i = 1;
+   static int i = 0;
    return i++;
 }
 
-void backtrace(FILE *fd, int tag, long pos){
-   int tagID1, tagID2;
-   tagID1 = getID();
-   tagID2 = getID();
+int backtrace(FILE *fd, word pos){
+   if(map[pos] == color) return tag[pos];
+   map[pos] = color;
+   tag[pos] = getID();
+
    char tag1[1024], tag2[1024];
 
-   if(traO[pos] != 'a' && (traO[traA[pos]] == 'a'))
-      sprintf(tag1, "a%ld", traA[traA[pos]]);
-   else
-      sprintf(tag1, "x%d", tagID1);
-
-   if(traO[pos] != 'a' && (traO[traB[pos]] == 'a'))
-      sprintf(tag2, "a%ld", traA[traB[pos]]);
-   else
-      sprintf(tag2, "x%d", tagID2);
-      
-
-   assert(pos >= 0);
    switch(traO[pos]){
       case '&':
       case '|':
       case '^':
          if(traO[traA[pos]] != 'a')
-            backtrace(fd, tagID1, traA[pos]);
+            sprintf(tag1, "x[%d]", backtrace(fd, traA[pos]));
+         else
+            sprintf(tag1, "a[%ld]", traA[traA[pos]]);
+            
          if(traO[traB[pos]] != 'a')
-            backtrace(fd, tagID2, traB[pos]);
-         fprintf(fd, "x%d = %s %c %s \n", tag, tag1, traO[pos], tag2);
+            sprintf(tag2, "x[%d]", backtrace(fd, traB[pos]));
+         else
+            sprintf(tag2, "a[%ld]", traA[traB[pos]]);
+
+         fprintf(fd, "   x[%d] = %s %c %s;\n", tag[pos], tag1, traO[pos], tag2);
          break;
       case '~':
          if(traO[traA[pos]] != 'a')
-            backtrace(fd, tagID1, traA[pos]);
-         fprintf(fd, "x%d = ~%s \n", tag, tag1);
+            sprintf(tag1, "x[%d]", backtrace(fd, traA[pos]));
+         else
+            sprintf(tag1, "a[%ld]", traA[traA[pos]]);
+
+         fprintf(fd, "   x[%d] = ~%s; \n", tag[pos], tag1);
          break;
       case 'a':
-         fprintf(fd, "x%d = a[%ld]\n", tag, traA[pos]); 
+         fprintf(fd, "   x[%d] = a[%ld];\n", tag[pos], traA[pos]); 
          break;
       default:
          assert( false );
    }
+   return tag[pos];
 }
 
 void usage(char* progName){
@@ -249,14 +252,32 @@ int main(int argc, char* argv[]){
 
    {
       fprintf(bitFILE, "void sboxBit(unsigned long a[4], unsigned long out[4]){\n");
+      fprintf(bitFILE, "   static unsigned long x[1000];\n");
    }
    // roll all SBOX into target
    for(int i = 0; i < OBIT; ++i)
       for(word k = 0; k < IALL; ++k)
          target[i] |= ((SBOX[k] >> i) & one) << k;
 
-   finds(target);
-   find(target[2]);
-   backtrace(stdout, getID(), count-1);
+   word pos[OBIT];
+   find(target, pos);
+
+   // need to permute
+   word perm[OBIT];
+   for(int i = 0; i < OBIT; ++i){
+      int tmp = -1;
+      for(int j = 0; j < OBIT; ++j)
+         if(arr[pos[j]] == target[i])
+            tmp = j;
+      assert(tmp >= 0);
+      perm[i] = tmp;
+   }
+
+   color++;
+   for(int i = OBIT-1; i >= 0; --i){
+      int tagID = backtrace(bitFILE, pos[perm[i]]);
+      fprintf(bitFILE, "   out[%d] = x[%d]; \n", i, tagID);
+   }
+   fprintf(bitFILE, "}\n");
 
 }
